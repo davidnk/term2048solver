@@ -63,4 +63,5 @@ def start_game():
             print_rules_and_exit()
 
     if not debug:
-        Game(**args).loop()
+        for _ in range(1):
+            Game(**args).loop()

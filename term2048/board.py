@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import random
+import copy
 
 # PY3 compat
 try:
@@ -26,6 +27,10 @@ class Board(object):
         self.cells = [[0]*self.__size for _ in xrange(self.__size)]
         self.addTile()
         self.addTile()
+
+    def clone(self):
+        """making a copy of the current state """
+        return copy.deepcopy(self)
 
     def size(self):
         """return the board size"""

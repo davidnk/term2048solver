@@ -4,6 +4,8 @@ from __future__ import print_function
 import os
 import os.path
 import math
+import random
+import time
 
 from colorama import init, Fore, Style
 init(autoreset=True)
@@ -132,12 +134,59 @@ class Game(object):
         """
         return not (self.board.won() or self.board.canMove())
 
+    def eval_board(self, board):
+        import math
+        v = 0
+        for x in range(len(board.cells) - 1):
+            for y in range(len(board.cells[x]) - 1):
+                v += abs(math.log(board.cells[x][y] if board.cells[x][y] else 1, 2) -
+                         math.log(board.cells[x+1][y] if board.cells[x+1][y] else 1, 2))
+                v += abs(math.log(board.cells[x][y] if board.cells[x][y] else 1, 2) -
+                         math.log(board.cells[x][y+1] if board.cells[x][y+1] else 1, 2))
+        for x in range(1,len(board.cells)):
+            for y in range(1, len(board.cells[x])):
+                v += abs(math.log(board.cells[x][y] if board.cells[x][y] else 1, 2) -
+                         math.log(board.cells[x-1][y] if board.cells[x-1][y] else 1, 2))
+                v += abs(math.log(board.cells[x][y] if board.cells[x][y] else 1, 2) -
+                         math.log(board.cells[x][y-1] if board.cells[x][y-1] else 1, 2))
+        return -v
+
+    def eval_move(self, m):
+        board = self.board.clone()
+        board.move(m)
+        if board.cells == self.board.cells:
+            return 0
+        v = 0
+        return self.eval_board(board)
+        for i in range(50): # try random moves 1000 times
+            moves = (random.choice(range(1, 5)) for _ in range(3))
+            for _ in range(2):
+                after_move_board = board.clone()
+                vv = 0
+                for m in moves:
+                    after_move_board.move(m)
+                vv += self.eval_board(after_move_board)
+            v = max(vv, v)
+        return v
+
     def readMove(self):
         """
         read and return a move to pass to a board
         """
-        k = keypress.getKey()
-        return Game.__dirs.get(k)
+        #k = keypress.getKey()
+        #return Game.__dirs.get(k)
+        options = range(1,5)
+        max_move = []
+        max_val = float('-inf')
+        for m in options:
+            v = self.eval_move(m)
+            if v > max_val:
+                max_move = [m]
+                max_val = v
+            elif v == max_val:
+                max_move.append(m)
+        #time.sleep(.1)
+        return random.choice(max_move)
 
     def loop(self):
         """
@@ -160,7 +209,8 @@ class Game(object):
             return
 
         self.saveBestScore()
-        print('You won!' if self.board.won() else 'Game Over')
+        #print('You won!' if self.board.won() else 'Game Over')
+        print(self.score)
         return self.score
 
     def getCellStr(self, x, y):  # TODO: refactor regarding issue #11
